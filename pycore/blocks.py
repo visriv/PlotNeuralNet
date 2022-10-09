@@ -28,6 +28,47 @@ def block_2ConvPool( name, botton, top, s_filer=256, n_filer=64, offset="(1,0,0)
         )
     ]
 
+def block_4Conv( name, to, s_filer=256, n_filer=64, offset="(0,0,0)", height=32, depth=32, widths=(3.5,3.5,3.5,3.5), opacity=0.5 ):
+    return [
+    to_ConvConvConvConvRelu( 
+        name="cccc_{}".format( name ),
+        s_filer=str(s_filer), 
+        n_filer=n_filer, 
+        offset=offset, 
+        to=to, 
+        width=widths, 
+        height=height, 
+        depth=depth,   
+        )
+    ]
+
+def block_ConvBN( name, botton, top, s_filer=256, n_filer=64, offset="(1,0,0)", size=(32,32,3.5), opacity=1.0 ):
+    return [
+    to_Conv( 
+        name="ccr_{}".format( name ),
+        s_filer=str(s_filer), 
+        n_filer=n_filer, 
+        offset=offset, 
+        to="({}-east)".format( botton ), 
+        width=size[2], 
+        height=size[0], 
+        depth=size[1],
+        colorfill = "\PurpleColor"   
+        ),    
+    to_BN(         
+        name="{}".format( top ), 
+        offset="(0,0,0)", 
+        to="(ccr_{}-east)".format( name ),  
+        width=1,         
+        height=size[0] , 
+        depth=size[1] , 
+        opacity=opacity, ),
+    to_connection( 
+        "{}".format( botton ), 
+        "ccr_{}".format( name )
+        )
+    ]
+
 
 def block_Unconv( name, botton, top, s_filer=256, n_filer=64, offset="(1,0,0)", size=(32,32,3.5), opacity=0.5 ):
     return [

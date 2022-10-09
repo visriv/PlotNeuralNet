@@ -1,0 +1,153 @@
+
+\documentclass[border=8pt, multi, tikz]{standalone} 
+\usepackage{import}
+\subimport{./layers/}{init}
+\usetikzlibrary{positioning}
+\usetikzlibrary{3d} %for including external image 
+
+\def\ConvColor{rgb:yellow,5;red,2.5;white,5}
+\def\ConvReluColor{rgb:yellow,5;red,5;white,5}
+\def\PoolColor{rgb:red,1;black,0.3}
+\def\UnpoolColor{rgb:blue,2;green,1;black,0.3}
+\def\FcColor{rgb:blue,5;red,2.5;white,5}
+\def\FcReluColor{rgb:blue,5;red,5;white,4}
+\def\SoftmaxColor{rgb:magenta,5;black,7}   
+\def\SumColor{rgb:blue,5;green,1}
+\def\FusionColor{rgb:red,179;green,0;blue,0}
+
+
+\newcommand{\copymidarrow}{\tikz \draw[-Stealth,line width=0.8mm,draw={rgb:blue,4;red,1;green,1;black,3}] (-0.3,0) -- ++(0.3,0);}
+
+\begin{document}
+\begin{tikzpicture}
+\tikzstyle{connection}=[ultra thick,every node/.style={sloped,allow upside down},draw=\edgecolor,opacity=0.7]
+\tikzstyle{copyconnection}=[ultra thick,every node/.style={sloped,allow upside down},draw={rgb:blue,4;red,1;green,1;black,3},opacity=0.7]
+
+\node[canvas is zy plane at x=0] (img1) at (-3, 0,0) {\includegraphics[width=8cm,height=8cm]{ct_scan.png}};
+
+\node[canvas is zy plane at x=0] (img2) at (-2,0,0) {\includegraphics[width=8cm,height=8cm]{pet_scan.png}};
+
+\pic[shift={ (0,0,0) }] at (0,0,0) 
+    {RightBandedBox={
+        name=cccc_conv1,
+        caption= ,
+        xlabel={{ 2, 48, 48, 48 }},
+        zlabel=256,
+        fill=\ConvColor,
+        bandfill=\ConvReluColor,
+        height=24,
+        width={ 1 , 3.5, 3.5 , 3.5 },
+        depth=24
+        }
+    };
+
+\pic[shift={ (1,0,0) }] at (cccc_conv1-east) 
+    {RightBandedBox={
+        name=cccc_conv2,
+        caption= ,
+        xlabel={{ 48, 48, 48, 48 }},
+        zlabel=256,
+        fill=\ConvColor,
+        bandfill=\ConvReluColor,
+        height=24,
+        width={ 3.5 , 3.5, 3.5 , 3.5 },
+        depth=24
+        }
+    };
+
+\draw [connection]  (cccc_conv1-east)    -- node {\midarrow} (cccc_conv2-west);
+
+\pic[shift={(1,0,0)}] at (cccc_conv2-east) 
+    {Box={
+        name=add1,
+        caption=add,
+        xlabel={{1, }},
+        zlabel=256,
+        fill=\FusionColor,
+        height=24,
+        width=1,
+        depth=24
+        }
+    };
+
+\path (cccc_conv1-southeast) -- (cccc_conv1-northeast) coordinate[pos=1.25] (cccc_conv1-top) ;
+\path (add1-south)  -- (add1-north)  coordinate[pos=1.25] (add1-top) ;
+\draw [copyconnection]  (cccc_conv1-northeast)  
+-- node {\copymidarrow}(cccc_conv1-top)
+-- node {\copymidarrow}(add1-top)
+-- node {\copymidarrow} (add1-north);
+
+\draw [connection]  (cccc_conv2-east)    -- node {\midarrow} (add1-west);
+
+\pic[shift={ (1,0,0) }] at (add1-east) 
+    {RightBandedBox={
+        name=cccc_conv3,
+        caption= ,
+        xlabel={{ 48, 48, 48, 48 }},
+        zlabel=256,
+        fill=\ConvColor,
+        bandfill=\ConvReluColor,
+        height=24,
+        width={ 1 , 3.5, 3.5 , 3.5 },
+        depth=24
+        }
+    };
+
+\draw [connection]  (add1-east)    -- node {\midarrow} (cccc_conv3-west);
+
+\pic[shift={ (1,0,0) }] at (cccc_conv3-east) 
+    {RightBandedBox={
+        name=cccc_conv4,
+        caption= ,
+        xlabel={{ 48, 48, 48, 48 }},
+        zlabel=256,
+        fill=\ConvColor,
+        bandfill=\ConvReluColor,
+        height=24,
+        width={ 3.5 , 3.5, 3.5 , 3.5 },
+        depth=24
+        }
+    };
+
+\draw [connection]  (cccc_conv3-east)    -- node {\midarrow} (cccc_conv4-west);
+
+\pic[shift={(1,0,0)}] at (cccc_conv4-east) 
+    {Box={
+        name=add2,
+        caption=add,
+        xlabel={{1, }},
+        zlabel=256,
+        fill=\FusionColor,
+        height=24,
+        width=1,
+        depth=24
+        }
+    };
+
+\path (cccc_conv3-southeast) -- (cccc_conv3-northeast) coordinate[pos=1.25] (cccc_conv3-top) ;
+\path (add2-south)  -- (add2-north)  coordinate[pos=1.25] (add2-top) ;
+\draw [copyconnection]  (cccc_conv3-northeast)  
+-- node {\copymidarrow}(cccc_conv3-top)
+-- node {\copymidarrow}(add2-top)
+-- node {\copymidarrow} (add2-north);
+
+\draw [connection]  (cccc_conv4-east)    -- node {\midarrow} (add2-west);
+
+\pic[shift={(1,0,0)}] at (add2-east) 
+    {Box={
+        name=conv5,
+        caption= ,
+        xlabel={{" ","dummy"}},
+        zlabel=256,
+        fill=\SoftmaxColor,
+        opacity=0.8,
+        height=24,
+        width=1,
+        depth=24
+        }
+    };
+
+\draw [connection]  (add2-east)    -- node {\midarrow} (conv5-west);
+
+\end{tikzpicture}
+\end{document}
